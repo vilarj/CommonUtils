@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>API Utilities</Title>
+    <Authors>Vilarj</Authors>
+    <Description>Common checking library for API development. It checks for null values, negative numbers, extra space at the end of a string...
+The library throws handling exceptions for making the developer's life easier</Description>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <AnalysisLevel>6.0-all</AnalysisLevel>
+    <PackageTags>Utilities;API;Reusable-Code</PackageTags>
+    <PackageId>API-Utilities</PackageId>
+  </PropertyGroup>
+
+</Project>

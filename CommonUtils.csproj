@@ -17,6 +17,7 @@ The library throws handling exceptions for making the developer's life easier.</
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/vilarj/CommonUtils</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -10,20 +11,25 @@
     <Description>Common checking library for API development. It checks for null values, negative numbers, extra space at the end of a string...
 The library throws handling exceptions for making the developer's life easier.</Description>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-    <AnalysisLevel>6.0-all</AnalysisLevel>
+    <AnalysisLevel>latest-all</AnalysisLevel>
     <PackageTags>Utilities;API;Reusable-Code</PackageTags>
     <PackageId>API-Utilities</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/vilarj/CommonUtils</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Version>1.0.1</Version>
+    <Version>2.0.0</Version>
+    <PackageIcon>commUtils.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Update="README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
+    </None>
+    <None Update="commUtils.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
     </None>
   </ItemGroup>
 

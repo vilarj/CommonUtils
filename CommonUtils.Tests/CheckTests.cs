@@ -602,4 +602,120 @@ public class CheckTests
     {
         Assert.Throws<ArgumentException>(() => Check.NotInFuture(default(DateTimeOffset), "param"));
     }
+
+    // ── Email ────────────────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("user@example.com")]
+    [InlineData("user.name+tag@sub.domain.org")]
+    [InlineData("USER@EXAMPLE.COM")]
+    public void Email_WithValidAddress_ReturnsTrimmedValue(string email)
+    {
+        Assert.Equal(email.Trim(), Check.Email(email, "param"));
+    }
+
+    [Fact]
+    public void Email_TrimsBeforeValidating()
+    {
+        Assert.Equal("user@example.com", Check.Email("  user@example.com  ", "param"));
+    }
+
+    [Fact]
+    public void Email_WithNull_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.Email(null, "param"));
+    }
+
+    [Fact]
+    public void Email_WithEmpty_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.Email("", "param"));
+    }
+
+    [Theory]
+    [InlineData("notanemail")]
+    [InlineData("missing@tld")]
+    [InlineData("@nodomain.com")]
+    [InlineData("spaces in@email.com")]
+    public void Email_WithInvalidAddress_ThrowsArgumentException(string email)
+    {
+        Assert.Throws<ArgumentException>(() => Check.Email(email, "param"));
+    }
+
+    // ── Url ──────────────────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("http://example.com")]
+    [InlineData("https://example.com/path?query=1")]
+    [InlineData("HTTPS://EXAMPLE.COM")]
+    public void Url_WithValidAbsoluteUrl_ReturnsTrimmedValue(string url)
+    {
+        Assert.Equal(url.Trim(), Check.Url(url, "param"));
+    }
+
+    [Fact]
+    public void Url_TrimsBeforeValidating()
+    {
+        Assert.Equal("https://example.com", Check.Url("  https://example.com  ", "param"));
+    }
+
+    [Fact]
+    public void Url_WithNull_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.Url(null, "param"));
+    }
+
+    [Fact]
+    public void Url_WithEmpty_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.Url("", "param"));
+    }
+
+    [Theory]
+    [InlineData("not-a-url")]
+    [InlineData("ftp://example.com")]
+    [InlineData("/relative/path")]
+    [InlineData("example.com")]
+    public void Url_WithInvalidOrNonHttpUrl_ThrowsArgumentException(string url)
+    {
+        Assert.Throws<ArgumentException>(() => Check.Url(url, "param"));
+    }
+
+    // ── Matches ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Matches_WithMatchingValue_ReturnsTrimmedValue()
+    {
+        Assert.Equal("ABC123", Check.Matches("ABC123", @"^[A-Z0-9]+$", "param"));
+    }
+
+    [Fact]
+    public void Matches_TrimsBeforeValidating()
+    {
+        Assert.Equal("ABC", Check.Matches("  ABC  ", @"^[A-Z]+$", "param"));
+    }
+
+    [Fact]
+    public void Matches_WithNull_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.Matches(null, @"^\d+$", "param"));
+    }
+
+    [Fact]
+    public void Matches_WithEmpty_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.Matches("", @"^\d+$", "param"));
+    }
+
+    [Fact]
+    public void Matches_WithNonMatchingValue_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.Matches("abc", @"^\d+$", "param"));
+    }
+
+    [Fact]
+    public void Matches_WithNullPattern_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => Check.Matches("abc", null!, "param"));
+    }
 }

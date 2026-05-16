@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace CommonUtils.Checks;
 
 /// <summary>
@@ -8,6 +10,9 @@ namespace CommonUtils.Checks;
 /// </summary>
 public static class Check
 {
+    private static readonly Regex EmailPattern =
+        new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
+
     // ── Null ─────────────────────────────────────────────────────────────────
 
     /// <summary>Throws <see cref="ArgumentNullException"/> if <paramref name="value"/> is null.</summary>
@@ -271,5 +276,57 @@ public static class Check
             throw new ArgumentOutOfRangeException(paramName, value, "DateTimeOffset must not be in the future.");
 
         return value;
+    }
+
+    // ── Format ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Throws if <paramref name="value"/> is null, empty, or not a valid email address.
+    /// Returns the trimmed value on success.
+    /// </summary>
+    public static string Email(string? value, string paramName)
+    {
+        var trimmed = NotEmpty(value, paramName);
+        if (!EmailPattern.IsMatch(trimmed))
+            throw new ArgumentException("Value must be a valid email address.", paramName);
+
+        return trimmed;
+    }
+
+    /// <summary>
+    /// Throws if <paramref name="value"/> is null, empty, or not an absolute HTTP/HTTPS URL.
+    /// Returns the trimmed value on success.
+    /// </summary>
+#pragma warning disable CA1055 // Intentionally returns string to stay consistent with other Check guards
+    public static string Url(string? value, string paramName)
+#pragma warning restore CA1055
+    {
+        var trimmed = NotEmpty(value, paramName);
+        if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            throw new ArgumentException("Value must be a valid absolute HTTP or HTTPS URL.", paramName);
+
+        return trimmed;
+    }
+
+    /// <summary>
+    /// Throws if <paramref name="value"/> is null, empty, or does not match <paramref name="pattern"/>.
+    /// Returns the trimmed value on success.
+    /// </summary>
+    public static string Matches(string? value, string pattern, string paramName)
+    {
+        ArgumentNullException.ThrowIfNull(pattern);
+        var trimmed = NotEmpty(value, paramName);
+        try
+        {
+            if (!Regex.IsMatch(trimmed, pattern, RegexOptions.None, TimeSpan.FromSeconds(1)))
+                throw new ArgumentException("Value does not match the required pattern.", paramName);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            throw new ArgumentException("Pattern matching timed out.", paramName);
+        }
+
+        return trimmed;
     }
 }

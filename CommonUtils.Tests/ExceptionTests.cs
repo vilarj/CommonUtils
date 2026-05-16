@@ -265,3 +265,133 @@ public class ForbiddenExceptionTests
         Assert.IsAssignableFrom<ApiException>(new ForbiddenException());
     }
 }
+
+public class TooManyRequestsExceptionTests
+{
+    [Fact]
+    public void StatusCode_IsHttpTooManyRequests()
+    {
+        Assert.Equal(429, new TooManyRequestsException().StatusCode);
+    }
+
+    [Fact]
+    public void DefaultMessage_IsSet()
+    {
+        Assert.Equal("Too many requests.", new TooManyRequestsException().Message);
+    }
+
+    [Fact]
+    public void CustomMessage_IsSet()
+    {
+        Assert.Equal("Rate limit exceeded.", new TooManyRequestsException("Rate limit exceeded.").Message);
+    }
+
+    [Fact]
+    public void ErrorCode_IsSetWhenProvided()
+    {
+        Assert.Equal("RATE_LIMIT", new TooManyRequestsException(errorCode: "RATE_LIMIT").ErrorCode);
+    }
+
+    [Fact]
+    public void ErrorCode_IsNullWhenOmitted()
+    {
+        Assert.Null(new TooManyRequestsException().ErrorCode);
+    }
+
+    [Fact]
+    public void RetryAfter_IsNullWhenOmitted()
+    {
+        Assert.Null(new TooManyRequestsException().RetryAfter);
+    }
+
+    [Fact]
+    public void RetryAfter_IsSetWhenProvided()
+    {
+        var delay = TimeSpan.FromSeconds(30);
+        Assert.Equal(delay, new TooManyRequestsException(retryAfter: delay).RetryAfter);
+    }
+
+    [Fact]
+    public void IsAssignableFrom_ApiException()
+    {
+        Assert.IsAssignableFrom<ApiException>(new TooManyRequestsException());
+    }
+}
+
+public class GoneExceptionTests
+{
+    [Fact]
+    public void StatusCode_IsHttpGone()
+    {
+        Assert.Equal(410, new GoneException().StatusCode);
+    }
+
+    [Fact]
+    public void DefaultMessage_IsSet()
+    {
+        Assert.Equal("The requested resource is no longer available.", new GoneException().Message);
+    }
+
+    [Fact]
+    public void CustomMessage_IsSet()
+    {
+        Assert.Equal("This endpoint has been removed.", new GoneException("This endpoint has been removed.").Message);
+    }
+
+    [Fact]
+    public void ErrorCode_IsSetWhenProvided()
+    {
+        Assert.Equal("RESOURCE_GONE", new GoneException(errorCode: "RESOURCE_GONE").ErrorCode);
+    }
+
+    [Fact]
+    public void ErrorCode_IsNullWhenOmitted()
+    {
+        Assert.Null(new GoneException().ErrorCode);
+    }
+
+    [Fact]
+    public void IsAssignableFrom_ApiException()
+    {
+        Assert.IsAssignableFrom<ApiException>(new GoneException());
+    }
+}
+
+public class ServiceUnavailableExceptionTests
+{
+    [Fact]
+    public void StatusCode_IsHttpServiceUnavailable()
+    {
+        Assert.Equal(503, new ServiceUnavailableException().StatusCode);
+    }
+
+    [Fact]
+    public void DefaultMessage_IsSet()
+    {
+        Assert.Equal("Service temporarily unavailable.", new ServiceUnavailableException().Message);
+    }
+
+    [Fact]
+    public void CustomMessage_IsSet()
+    {
+        Assert.Equal("Database is down.", new ServiceUnavailableException("Database is down.").Message);
+    }
+
+    [Fact]
+    public void ErrorCode_IsSetWhenProvided()
+    {
+        Assert.Equal("DB_UNAVAILABLE", new ServiceUnavailableException(errorCode: "DB_UNAVAILABLE").ErrorCode);
+    }
+
+    [Fact]
+    public void ErrorCode_IsNullWhenOmitted()
+    {
+        Assert.Null(new ServiceUnavailableException().ErrorCode);
+    }
+
+    [Fact]
+    public void IsAssignableFrom_ApiException()
+    {
+        Assert.IsAssignableFrom<ApiException>(new ServiceUnavailableException());
+    }
+}

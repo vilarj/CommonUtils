@@ -190,4 +190,139 @@ public class StringExtensionsTests
         // r (from Order) → I (from ID) is a lowercase → uppercase transition.
         Assert.Equal("order_id", "OrderID".ToSnakeCase());
     }
+
+    // ── ToKebabCase ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public void ToKebabCase_WithNull_ReturnsNull()
+    {
+        string? value = null;
+        Assert.Null(value!.ToKebabCase());
+    }
+
+    [Fact]
+    public void ToKebabCase_WithEmptyString_ReturnsEmpty()
+    {
+        Assert.Equal("", "".ToKebabCase());
+    }
+
+    [Fact]
+    public void ToKebabCase_PascalCase_ConvertsToKebabCase()
+    {
+        Assert.Equal("order-id", "OrderId".ToKebabCase());
+    }
+
+    [Fact]
+    public void ToKebabCase_CamelCase_ConvertsToKebabCase()
+    {
+        Assert.Equal("order-id", "orderId".ToKebabCase());
+    }
+
+    [Fact]
+    public void ToKebabCase_MultipleWords_ConvertsAllTransitions()
+    {
+        Assert.Equal("order-line-item", "OrderLineItem".ToKebabCase());
+    }
+
+    [Fact]
+    public void ToKebabCase_AlreadyLowercase_ReturnsUnchanged()
+    {
+        Assert.Equal("hello", "hello".ToKebabCase());
+    }
+
+    // ── ToPascalCase ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public void ToPascalCase_WithNull_ReturnsNull()
+    {
+        string? value = null;
+        Assert.Null(value!.ToPascalCase());
+    }
+
+    [Fact]
+    public void ToPascalCase_WithEmptyString_ReturnsEmpty()
+    {
+        Assert.Equal("", "".ToPascalCase());
+    }
+
+    [Fact]
+    public void ToPascalCase_SnakeCase_ConvertsToPascalCase()
+    {
+        Assert.Equal("OrderId", "order_id".ToPascalCase());
+    }
+
+    [Fact]
+    public void ToPascalCase_KebabCase_ConvertsToPascalCase()
+    {
+        Assert.Equal("OrderLineItem", "order-line-item".ToPascalCase());
+    }
+
+    [Fact]
+    public void ToPascalCase_SingleWord_CapitalizesFirstLetter()
+    {
+        Assert.Equal("Hello", "hello".ToPascalCase());
+    }
+
+    [Fact]
+    public void ToPascalCase_MultipleWords_CapitalizesEachWord()
+    {
+        Assert.Equal("UserFirstName", "user_first_name".ToPascalCase());
+    }
+
+    [Fact]
+    public void ToPascalCase_MixedSeparators_HandlesAllSeparators()
+    {
+        Assert.Equal("OrderLineItem", "order_line-item".ToPascalCase());
+    }
+
+    // ── Mask ─────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Mask_WithNull_ThrowsArgumentNullException()
+    {
+        string? value = null;
+        Assert.Throws<ArgumentNullException>(() => value!.Mask());
+    }
+
+    [Fact]
+    public void Mask_WithNegativeVisibleStart_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => "hello".Mask(visibleStart: -1));
+    }
+
+    [Fact]
+    public void Mask_WithNegativeVisibleEnd_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => "hello".Mask(visibleEnd: -1));
+    }
+
+    [Fact]
+    public void Mask_DefaultParams_MasksAllButFirstTwoChars()
+    {
+        Assert.Equal("jo*************", "john@example.com".Mask());
+    }
+
+    [Fact]
+    public void Mask_WithVisibleEnd_PreservesTrailingChars()
+    {
+        Assert.Equal("jo**********com", "john@example.com".Mask(visibleStart: 2, visibleEnd: 3));
+    }
+
+    [Fact]
+    public void Mask_WhenTotalVisibleExceedsLength_MasksEntireString()
+    {
+        Assert.Equal("***", "abc".Mask(visibleStart: 5, visibleEnd: 5));
+    }
+
+    [Fact]
+    public void Mask_CustomMaskChar_UsesProvidedChar()
+    {
+        Assert.Equal("jo###########om", "john@example.com".Mask(visibleStart: 2, visibleEnd: 2, maskChar: '#'));
+    }
+
+    [Fact]
+    public void Mask_EmptyString_ReturnsEmpty()
+    {
+        Assert.Equal("", "".Mask());
+    }
 }

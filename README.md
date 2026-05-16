@@ -1,6 +1,6 @@
 # API Utilities
 
-A lightweight .NET library of reusable building blocks for API development: input guards, string helpers, uniform response envelopes, pagination, and HTTP-aware exceptions.
+A lightweight .NET library of reusable building blocks for API development: input guards, string helpers, uniform response envelopes, pagination, sorting, HTTP-aware exceptions, and a functional result type.
 
 [![NuGet](https://img.shields.io/nuget/v/API-Utilities)](https://www.nuget.org/packages/API-Utilities)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
@@ -19,13 +19,14 @@ dotnet add package API-Utilities
 
 ## Namespaces
 
-| Namespace | Contents |
-|---|---|
-| `CommonUtils.Checks` | `Check` — static guard methods |
-| `CommonUtils.Extensions` | `StringExtensions` — string helpers |
-| `CommonUtils.Responses` | `ApiResponse`, `ApiResponse<T>` — response envelope |
-| `CommonUtils.Pagination` | `PaginationParams`, `PagedResult<T>` |
-| `CommonUtils.Exceptions` | `ApiException` and HTTP-specific subclasses |
+| Namespace                | Contents                                                            |
+| ------------------------ | ------------------------------------------------------------------- |
+| `CommonUtils.Checks`     | `Check` — static guard methods                                      |
+| `CommonUtils.Extensions` | `StringExtensions` — string helpers                                 |
+| `CommonUtils.Responses`  | `ApiResponse`, `ApiResponse<T>` — response envelope                 |
+| `CommonUtils.Pagination` | `PaginationParams`, `PagedResult<T>`, `SortParams`, `SortDirection` |
+| `CommonUtils.Exceptions` | `ApiException` and HTTP-specific subclasses                         |
+| `CommonUtils.Results`    | `Result<T>`, `Result`, `Unit` — functional result type              |
 
 ---
 
@@ -46,48 +47,62 @@ public void CreateOrder(string customerId, int quantity, decimal price)
 
 ### String guards
 
-| Method | Throws | Notes |
-|---|---|---|
-| `NotEmpty(string?, paramName)` | `ArgumentException` | Null, empty, or whitespace. Returns trimmed value. |
-| `MaxLength(string, max, paramName)` | `ArgumentException` | Trims before measuring. Returns original value. |
-| `MinLength(string, min, paramName)` | `ArgumentException` | Trims before measuring. Returns original value. |
-| `Length(string, min, max, paramName)` | `ArgumentException` | Combined min + max check. |
+| Method                                | Throws              | Notes                                              |
+| ------------------------------------- | ------------------- | -------------------------------------------------- |
+| `NotEmpty(string?, paramName)`        | `ArgumentException` | Null, empty, or whitespace. Returns trimmed value. |
+| `MaxLength(string, max, paramName)`   | `ArgumentException` | Trims before measuring. Returns original value.    |
+| `MinLength(string, min, paramName)`   | `ArgumentException` | Trims before measuring. Returns original value.    |
+| `Length(string, min, max, paramName)` | `ArgumentException` | Combined min + max check.                          |
 
 ### Numeric guards — `int`, `long`, `decimal`, `double`
 
-| Method | Throws | Notes |
-|---|---|---|
-| `Positive(value, paramName)` | `ArgumentOutOfRangeException` | value > 0 |
-| `NotNegative(value, paramName)` | `ArgumentOutOfRangeException` | value ≥ 0 |
+| Method                                | Throws                        | Notes                         |
+| ------------------------------------- | ----------------------------- | ----------------------------- |
+| `Positive(value, paramName)`          | `ArgumentOutOfRangeException` | value > 0                     |
+| `NotNegative(value, paramName)`       | `ArgumentOutOfRangeException` | value ≥ 0                     |
 | `InRange(value, min, max, paramName)` | `ArgumentOutOfRangeException` | `int` and `decimal` overloads |
 
 ### Collection guards
 
-| Method | Throws | Notes |
-|---|---|---|
-| `NotNull<T>(value, paramName)` | `ArgumentNullException` | Any reference type |
-| `NotEmpty<T>(IEnumerable<T>?, paramName)` | `ArgumentException` | Null or empty |
-| `MaxCount<T>(ICollection<T>, max, paramName)` | `ArgumentException` | — |
-| `MinCount<T>(ICollection<T>, min, paramName)` | `ArgumentException` | — |
+| Method                                        | Throws                  | Notes              |
+| --------------------------------------------- | ----------------------- | ------------------ |
+| `NotNull<T>(value, paramName)`                | `ArgumentNullException` | Any reference type |
+| `NotEmpty<T>(IEnumerable<T>?, paramName)`     | `ArgumentException`     | Null or empty      |
+| `MaxCount<T>(ICollection<T>, max, paramName)` | `ArgumentException`     | —                  |
+| `MinCount<T>(ICollection<T>, min, paramName)` | `ArgumentException`     | —                  |
 
 ### Other guards
 
-| Method | Throws | Notes |
-|---|---|---|
-| `NotEmpty(Guid, paramName)` | `ArgumentException` | `Guid.Empty` check |
-| `Defined<T>(T, paramName)` | `ArgumentException` | Enum value must be declared |
-| `NotDefault(DateTime, paramName)` | `ArgumentException` | Rejects `DateTime.MinValue` |
-| `NotDefault(DateTimeOffset, paramName)` | `ArgumentException` | — |
-| `NotInPast(DateTime, paramName)` | `ArgumentOutOfRangeException` | Calls `NotDefault` first |
-| `NotInFuture(DateTime, paramName)` | `ArgumentOutOfRangeException` | Calls `NotDefault` first |
-| `NotInPast(DateTimeOffset, paramName)` | `ArgumentOutOfRangeException` | — |
-| `NotInFuture(DateTimeOffset, paramName)` | `ArgumentOutOfRangeException` | — |
+| Method                                   | Throws                        | Notes                       |
+| ---------------------------------------- | ----------------------------- | --------------------------- |
+| `NotEmpty(Guid, paramName)`              | `ArgumentException`           | `Guid.Empty` check          |
+| `Defined<T>(T, paramName)`               | `ArgumentException`           | Enum value must be declared |
+| `NotDefault(DateTime, paramName)`        | `ArgumentException`           | Rejects `DateTime.MinValue` |
+| `NotDefault(DateTimeOffset, paramName)`  | `ArgumentException`           | —                           |
+| `NotInPast(DateTime, paramName)`         | `ArgumentOutOfRangeException` | Calls `NotDefault` first    |
+| `NotInFuture(DateTime, paramName)`       | `ArgumentOutOfRangeException` | Calls `NotDefault` first    |
+| `NotInPast(DateTimeOffset, paramName)`   | `ArgumentOutOfRangeException` | —                           |
+| `NotInFuture(DateTimeOffset, paramName)` | `ArgumentOutOfRangeException` | —                           |
 
 ```csharp
 var id      = Check.NotEmpty(dto.Id, nameof(dto.Id));
 var tags    = Check.NotEmpty(dto.Tags, nameof(dto.Tags));
 var role    = Check.Defined(dto.Role, nameof(dto.Role));
 var expires = Check.NotInPast(dto.ExpiresAt, nameof(dto.ExpiresAt));
+```
+
+### Format guards
+
+| Method                                 | Throws              | Notes                                          |
+| -------------------------------------- | ------------------- | ---------------------------------------------- |
+| `Email(string?, paramName)`            | `ArgumentException` | RFC-style format check. Returns trimmed value. |
+| `Url(string?, paramName)`              | `ArgumentException` | Absolute HTTP/HTTPS URL only.                  |
+| `Matches(string?, pattern, paramName)` | `ArgumentException` | Custom regex with 1-second timeout.            |
+
+```csharp
+email    = Check.Email(dto.Email, nameof(dto.Email));
+website  = Check.Url(dto.Website, nameof(dto.Website));
+postCode = Check.Matches(dto.PostCode, @"^\d{5}$", nameof(dto.PostCode));
 ```
 
 ---
@@ -135,6 +150,38 @@ Converts PascalCase or camelCase to `snake_case`. Breaks on lowercase/digit → 
 ```
 
 > **Acronym behaviour:** Only the last uppercase letter in a run is treated as a word boundary. `"OrderID"` → `"order_id"` (breaks before `D`). `"HTTPServer"` → `"httpserver"` (no internal break).
+
+### `ToKebabCase`
+
+Converts PascalCase or camelCase to `kebab-case`. Useful for URL slugs and route segments.
+
+```csharp
+"OrderLineItem".ToKebabCase() // "order-line-item"
+"createdAt".ToKebabCase()     // "created-at"
+```
+
+### `ToPascalCase`
+
+Converts `snake_case` or `kebab-case` to `PascalCase`.
+
+```csharp
+"order_line_item".ToPascalCase() // "OrderLineItem"
+"order-line-item".ToPascalCase() // "OrderLineItem"
+"hello".ToPascalCase()           // "Hello"
+```
+
+### `Mask`
+
+Masks the middle of a string, preserving a configurable number of characters at each end. Safe for logging emails, tokens, and phone numbers.
+
+```csharp
+"user@example.com".Mask()              // "us**************" (2 visible start, default)
+"user@example.com".Mask(2, 3)         // "us***********com"
+"secret-token".Mask(0, 0, '#')        // "############"
+```
+
+**Parameters:** `visibleStart` (default 2), `visibleEnd` (default 0), `maskChar` (default `*`).  
+When `visibleStart + visibleEnd ≥ length`, the entire string is masked.
 
 ---
 
@@ -218,17 +265,42 @@ return Ok(ApiResponse.Ok(result));
 
 **Properties on `PagedResult<T>`:**
 
-| Property | Type | Description |
-|---|---|---|
-| `Items` | `IReadOnlyList<T>` | Current page items |
-| `Page` | `int` | Current page (1-based) |
-| `PageSize` | `int` | Items per page |
-| `TotalCount` | `int` | Total items across all pages |
-| `TotalPages` | `int` | Computed: `⌈TotalCount / PageSize⌉` |
-| `HasNextPage` | `bool` | `Page < TotalPages` |
-| `HasPreviousPage` | `bool` | `Page > 1` |
+| Property          | Type               | Description                         |
+| ----------------- | ------------------ | ----------------------------------- |
+| `Items`           | `IReadOnlyList<T>` | Current page items                  |
+| `Page`            | `int`              | Current page (1-based)              |
+| `PageSize`        | `int`              | Items per page                      |
+| `TotalCount`      | `int`              | Total items across all pages        |
+| `TotalPages`      | `int`              | Computed: `⌈TotalCount / PageSize⌉` |
+| `HasNextPage`     | `bool`             | `Page < TotalPages`                 |
+| `HasPreviousPage` | `bool`             | `Page > 1`                          |
 
 Use `PagedResult.Empty<T>(pagination)` when the data source returns nothing.
+
+### `SortParams`
+
+Companion to `PaginationParams` for list endpoints that support ordering. Bind directly from the query string.
+
+```csharp
+// GET /orders?sortBy=createdAt&direction=Desc
+[HttpGet]
+public IActionResult GetOrders(
+    [FromQuery] PaginationParams pagination,
+    [FromQuery] SortParams sort)
+{
+    pagination.Validate();
+    sort.Validate(["name", "createdAt", "price"]); // throws BadRequestException for unknown columns
+
+    if (sort.IsActive)
+    {
+        query = sort.Direction == SortDirection.Desc
+            ? query.OrderByDescending(sort.SortBy)
+            : query.OrderBy(sort.SortBy);
+    }
+}
+```
+
+`Validate(allowedColumns)` is a no-op when `SortBy` is null or empty — safe to call unconditionally.
 
 ---
 
@@ -242,14 +314,17 @@ using CommonUtils.Exceptions;
 
 ### Available exceptions
 
-| Class | Status | When to use |
-|---|---|---|
-| `BadRequestException` | 400 | Malformed input, failed preconditions |
-| `UnauthorizedException` | 401 | Missing or invalid credentials |
-| `ForbiddenException` | 403 | Authenticated but not permitted |
-| `NotFoundException` | 404 | Resource does not exist |
-| `ConflictException` | 409 | Duplicate or state conflict |
-| `ValidationException` | 422 | Semantic validation errors (field-level) |
+| Class                         | Status | When to use                                       |
+| ----------------------------- | ------ | ------------------------------------------------- |
+| `BadRequestException`         | 400    | Malformed input, failed preconditions             |
+| `UnauthorizedException`       | 401    | Missing or invalid credentials                    |
+| `ForbiddenException`          | 403    | Authenticated but not permitted                   |
+| `NotFoundException`           | 404    | Resource does not exist                           |
+| `ConflictException`           | 409    | Duplicate or state conflict                       |
+| `ValidationException`         | 422    | Semantic validation errors (field-level)          |
+| `TooManyRequestsException`    | 429    | Rate limit exceeded                               |
+| `GoneException`               | 410    | Resource permanently removed                      |
+| `ServiceUnavailableException` | 503    | Dependency down, maintenance, or transient outage |
 
 ### Usage
 
@@ -271,6 +346,23 @@ throw new ValidationException(new Dictionary<string, string[]>
 });
 ```
 
+### New exceptions usage
+
+```csharp
+// Rate limiting — include a retry hint for the client
+throw new TooManyRequestsException(retryAfter: TimeSpan.FromSeconds(30));
+
+// Map RetryAfter in middleware
+if (ex is TooManyRequestsException tooMany && tooMany.RetryAfter.HasValue)
+    context.Response.Headers["Retry-After"] = ((int)tooMany.RetryAfter.Value.TotalSeconds).ToString();
+
+// Permanently removed resource
+throw new GoneException("This API version has been retired.");
+
+// Dependency or database unavailable
+throw new ServiceUnavailableException("Payment provider is currently unavailable.", "PAYMENT_DOWN");
+```
+
 ### Middleware integration (ASP.NET Core)
 
 ```csharp
@@ -281,6 +373,10 @@ app.UseExceptionHandler(builder => builder.Run(async context =>
     if (ex is ApiException apiEx)
     {
         context.Response.StatusCode = apiEx.StatusCode;
+
+        if (ex is TooManyRequestsException tooMany && tooMany.RetryAfter.HasValue)
+            context.Response.Headers["Retry-After"] = ((int)tooMany.RetryAfter.Value.TotalSeconds).ToString();
+
         await context.Response.WriteAsJsonAsync(new
         {
             success = false,
@@ -296,6 +392,57 @@ app.UseExceptionHandler(builder => builder.Run(async context =>
     await context.Response.WriteAsJsonAsync(new { success = false, errors = new[] { "An unexpected error occurred." } });
 }));
 ```
+
+---
+
+## Result\<T\> — Functional Result Type
+
+An alternative to throwing exceptions for expected failure paths. Operations return `Result<T>` — the caller decides what to do with a failure rather than catching an exception.
+
+```csharp
+using CommonUtils.Results;
+```
+
+### Returning results
+
+```csharp
+// Success with a value
+Result<Order> result = Result.Ok(order);
+
+// Failure with a single error
+Result<Order> result = Result.Fail<Order>("Order not found.");
+
+// Failure with multiple errors
+Result<Order> result = Result.Fail<Order>(["Stock too low", "Payment declined"]);
+
+// No-value success (commands, void operations)
+Result<Unit> result = Result.Ok();
+
+// Implicit conversion from value
+Result<int> result = 42; // equivalent to Result.Ok(42)
+```
+
+### Consuming results
+
+```csharp
+var result = _orderService.PlaceOrder(dto);
+
+if (result.IsFailure)
+    return BadRequest(ApiResponse.Fail<Order>(result.Errors));
+
+return Ok(ApiResponse.Ok(result.Value!));
+```
+
+### Properties on `Result<T>`
+
+| Property    | Type                    | Description                             |
+| ----------- | ----------------------- | --------------------------------------- |
+| `IsSuccess` | `bool`                  | `true` when the operation succeeded     |
+| `IsFailure` | `bool`                  | `!IsSuccess`                            |
+| `Value`     | `T?`                    | The result value; meaningful on success |
+| `Errors`    | `IReadOnlyList<string>` | Error messages; empty on success        |
+
+Use `Result<Unit>` for operations with no return value. `Unit.Value` is the singleton instance.
 
 ---
 

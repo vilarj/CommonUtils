@@ -18,7 +18,15 @@ The library throws handling exceptions for making the developer's life easier.</
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/vilarj/CommonUtils</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Version>2.0.2</Version>
+    <Version>2.1.0</Version>
+    <PackageReleaseNotes>
+      v2.1.0
+      - Added TooManyRequestsException (429), GoneException (410), ServiceUnavailableException (503)
+      - Added SortParams and SortDirection for standardised list endpoint ordering
+      - Added Check.Email, Check.Url, Check.Matches format guards
+      - Added ToKebabCase, ToPascalCase, Mask string extension methods
+      - Added Result&lt;T&gt; functional result type with Unit for void operations
+    </PackageReleaseNotes>
     <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
 

@@ -14,6 +14,9 @@ public static class StringExtensions
     private static readonly Regex PascalOrCamelPattern =
         new(@"([a-z0-9])([A-Z])", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
+    private static readonly Regex SeparatorPattern =
+        new(@"[-_](\w)", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+
     /// <summary>
     /// Trims leading/trailing whitespace and collapses any run of internal whitespace
     /// to a single space. Useful for cleaning up name/address fields from form input.
@@ -49,7 +52,7 @@ public static class StringExtensions
     /// without a serializer attribute on every property.
     /// <example><c>"OrderId"</c> → <c>"order_id"</c></example>
     /// </summary>
-#pragma warning disable CA1308 // Intentionally lowercasing for snake_case output
+#pragma warning disable CA1308 // Intentionally lowercasing for snake_case / kebab-case output
     public static string ToSnakeCase(this string value)
     {
         if (string.IsNullOrEmpty(value))
@@ -57,5 +60,52 @@ public static class StringExtensions
 
         return PascalOrCamelPattern.Replace(value, "$1_$2").ToLowerInvariant();
     }
+
+    /// <summary>
+    /// Converts PascalCase or camelCase to kebab-case.
+    /// Useful for URL slugs and route segments.
+    /// <example><c>"OrderLineItem"</c> → <c>"order-line-item"</c></example>
+    /// </summary>
+    public static string ToKebabCase(this string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return value;
+
+        return PascalOrCamelPattern.Replace(value, "$1-$2").ToLowerInvariant();
+    }
 #pragma warning restore CA1308
+
+    /// <summary>
+    /// Converts snake_case or kebab-case to PascalCase.
+    /// <example><c>"order_line_item"</c> → <c>"OrderLineItem"</c></example>
+    /// </summary>
+    public static string ToPascalCase(this string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return value;
+
+        var seeded = char.ToUpperInvariant(value[0]) + (value.Length > 1 ? value[1..] : string.Empty);
+        return SeparatorPattern.Replace(seeded, m => m.Groups[1].Value.ToUpperInvariant());
+    }
+
+    /// <summary>
+    /// Masks the middle of a string, preserving <paramref name="visibleStart"/> characters at the
+    /// front and <paramref name="visibleEnd"/> characters at the end. Safe for logging emails,
+    /// tokens, and phone numbers.
+    /// <example><c>"user@example.com".Mask(2, 4)</c> → <c>"us**********m"</c></example>
+    /// </summary>
+    public static string Mask(this string value, int visibleStart = 2, int visibleEnd = 0, char maskChar = '*')
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        ArgumentOutOfRangeException.ThrowIfNegative(visibleStart);
+        ArgumentOutOfRangeException.ThrowIfNegative(visibleEnd);
+
+        var totalVisible = visibleStart + visibleEnd;
+        if (totalVisible >= value.Length)
+            return new string(maskChar, value.Length);
+
+        var start = visibleStart > 0 ? value[..visibleStart] : string.Empty;
+        var end = visibleEnd > 0 ? value[^visibleEnd..] : string.Empty;
+        return start + new string(maskChar, value.Length - totalVisible) + end;
+    }
 }

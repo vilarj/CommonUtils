@@ -1,6 +1,7 @@
 #pragma warning disable CA1032 // Standard exception constructors omitted intentionally — status code is required
 
 using System.Collections.ObjectModel;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace CommonUtils.Exceptions;
 
@@ -35,4 +36,22 @@ public sealed class ValidationException : ApiException
         Errors = new ReadOnlyDictionary<string, string[]>(
             new Dictionary<string, string[]> { [field] = messages });
     }
+
+    /// <summary>
+    /// Creates a <see cref="ValidationException"/> from an ASP.NET Core
+    /// <see cref="ModelStateDictionary"/>, mapping each invalid field to its error messages.
+    /// </summary>
+    public static ValidationException FromModelState(ModelStateDictionary modelState)
+    {
+        ArgumentNullException.ThrowIfNull(modelState);
+
+        var errors = modelState
+            .Where(kvp => kvp.Value?.Errors.Count > 0)
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+
+        return new ValidationException(errors);
+    }
 }
+

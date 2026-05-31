@@ -718,4 +718,229 @@ public class CheckTests
     {
         Assert.Throws<ArgumentNullException>(() => Check.Matches("abc", null!, "param"));
     }
+
+    // ── NotEmpty(IReadOnlyCollection<T>) ─────────────────────────────────────
+
+    [Fact]
+    public void NotEmpty_ReadOnlyCollection_WithNonEmptyList_ReturnsCollection()
+    {
+        IReadOnlyCollection<int> list = new List<int> { 1, 2, 3 };
+        var result = Check.NotEmpty(list, "param");
+        Assert.Same(list, result);
+    }
+
+    [Fact]
+    public void NotEmpty_ReadOnlyCollection_WithNull_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => Check.NotEmpty<int>((IReadOnlyCollection<int>?)null, "param"));
+    }
+
+    [Fact]
+    public void NotEmpty_ReadOnlyCollection_WithEmptyList_ThrowsArgumentException()
+    {
+        IReadOnlyCollection<int> empty = new List<int>();
+        Assert.Throws<ArgumentException>(() => Check.NotEmpty(empty, "param"));
+    }
+
+    // ── Phone ─────────────────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("+15551234567")]
+    [InlineData("+447911123456")]
+    [InlineData("+12025550123")]
+    public void Phone_WithValidE164_ReturnsTrimmedValue(string phone)
+    {
+        Assert.Equal(phone.Trim(), Check.Phone(phone, "param"));
+    }
+
+    [Fact]
+    public void Phone_TrimsBeforeValidating()
+    {
+        Assert.Equal("+15551234567", Check.Phone("  +15551234567  ", "param"));
+    }
+
+    [Fact]
+    public void Phone_WithNull_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.Phone(null, "param"));
+    }
+
+    [Theory]
+    [InlineData("5551234567")]        // missing +
+    [InlineData("+0123456789")]       // leading 0 after +
+    [InlineData("+1")]                // too short
+    [InlineData("+1555123456789012")] // too long (16 digits after +)
+    [InlineData("notaphone")]
+    public void Phone_WithInvalidValue_ThrowsArgumentException(string phone)
+    {
+        Assert.Throws<ArgumentException>(() => Check.Phone(phone, "param"));
+    }
+
+    // ── NotDefault(DateOnly) ─────────────────────────────────────────────────
+
+    [Fact]
+    public void NotDefault_DateOnly_WithValidDate_ReturnsDate()
+    {
+        var date = new DateOnly(2024, 6, 1);
+        Assert.Equal(date, Check.NotDefault(date, "param"));
+    }
+
+    [Fact]
+    public void NotDefault_DateOnly_WithDefault_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.NotDefault(default(DateOnly), "param"));
+    }
+
+    // ── NotInPast(DateOnly) ──────────────────────────────────────────────────
+
+    [Fact]
+    public void NotInPast_DateOnly_WithFutureDate_ReturnsDate()
+    {
+        var future = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2));
+        Assert.Equal(future, Check.NotInPast(future, "param"));
+    }
+
+    [Fact]
+    public void NotInPast_DateOnly_WithPastDate_ThrowsArgumentOutOfRangeException()
+    {
+        var past = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Check.NotInPast(past, "param"));
+    }
+
+    [Fact]
+    public void NotInPast_DateOnly_WithDefault_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.NotInPast(default(DateOnly), "param"));
+    }
+
+    // ── NotInFuture(DateOnly) ────────────────────────────────────────────────
+
+    [Fact]
+    public void NotInFuture_DateOnly_WithPastDate_ReturnsDate()
+    {
+        var past = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
+        Assert.Equal(past, Check.NotInFuture(past, "param"));
+    }
+
+    [Fact]
+    public void NotInFuture_DateOnly_WithFutureDate_ThrowsArgumentOutOfRangeException()
+    {
+        var future = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Check.NotInFuture(future, "param"));
+    }
+
+    [Fact]
+    public void NotInFuture_DateOnly_WithDefault_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.NotInFuture(default(DateOnly), "param"));
+    }
+
+    // ── NotDefault(TimeOnly) ─────────────────────────────────────────────────
+
+    [Fact]
+    public void NotDefault_TimeOnly_WithValidTime_ReturnsTime()
+    {
+        var time = new TimeOnly(9, 30);
+        Assert.Equal(time, Check.NotDefault(time, "param"));
+    }
+
+    [Fact]
+    public void NotDefault_TimeOnly_WithDefault_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => Check.NotDefault(default(TimeOnly), "param"));
+    }
+
+    // ── InRange(TimeOnly) ────────────────────────────────────────────────────
+
+    [Fact]
+    public void InRange_TimeOnly_WithinRange_ReturnsValue()
+    {
+        var value = new TimeOnly(10, 0);
+        var result = Check.InRange(value, new TimeOnly(9, 0), new TimeOnly(17, 0), "param");
+        Assert.Equal(value, result);
+    }
+
+    [Fact]
+    public void InRange_TimeOnly_AtMinBoundary_ReturnsValue()
+    {
+        var min = new TimeOnly(9, 0);
+        Assert.Equal(min, Check.InRange(min, min, new TimeOnly(17, 0), "param"));
+    }
+
+    [Fact]
+    public void InRange_TimeOnly_BelowMin_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            Check.InRange(new TimeOnly(8, 0), new TimeOnly(9, 0), new TimeOnly(17, 0), "param"));
+    }
+
+    [Fact]
+    public void InRange_TimeOnly_AboveMax_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            Check.InRange(new TimeOnly(18, 0), new TimeOnly(9, 0), new TimeOnly(17, 0), "param"));
+    }
+
+    // ── TimeSpan guards ───────────────────────────────────────────────────────
+
+    [Fact]
+    public void Positive_TimeSpan_WithPositiveValue_ReturnsValue()
+    {
+        var ts = TimeSpan.FromSeconds(30);
+        Assert.Equal(ts, Check.Positive(ts, "param"));
+    }
+
+    [Fact]
+    public void Positive_TimeSpan_WithZero_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Check.Positive(TimeSpan.Zero, "param"));
+    }
+
+    [Fact]
+    public void Positive_TimeSpan_WithNegative_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Check.Positive(TimeSpan.FromSeconds(-1), "param"));
+    }
+
+    [Fact]
+    public void NotNegative_TimeSpan_WithZero_ReturnsZero()
+    {
+        Assert.Equal(TimeSpan.Zero, Check.NotNegative(TimeSpan.Zero, "param"));
+    }
+
+    [Fact]
+    public void NotNegative_TimeSpan_WithPositive_ReturnsValue()
+    {
+        var ts = TimeSpan.FromMinutes(5);
+        Assert.Equal(ts, Check.NotNegative(ts, "param"));
+    }
+
+    [Fact]
+    public void NotNegative_TimeSpan_WithNegative_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Check.NotNegative(TimeSpan.FromSeconds(-1), "param"));
+    }
+
+    [Fact]
+    public void InRange_TimeSpan_WithinRange_ReturnsValue()
+    {
+        var value = TimeSpan.FromMinutes(30);
+        var min = TimeSpan.FromMinutes(10);
+        var max = TimeSpan.FromHours(1);
+        Assert.Equal(value, Check.InRange(value, min, max, "param"));
+    }
+
+    [Fact]
+    public void InRange_TimeSpan_BelowMin_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            Check.InRange(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(10), TimeSpan.FromHours(1), "param"));
+    }
+
+    [Fact]
+    public void InRange_TimeSpan_AboveMax_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            Check.InRange(TimeSpan.FromHours(2), TimeSpan.FromMinutes(10), TimeSpan.FromHours(1), "param"));
+    }
 }

@@ -13,6 +13,9 @@ public static class Check
     private static readonly Regex EmailPattern =
         new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
 
+    private static readonly Regex PhonePattern =
+        new(@"^\+[1-9]\d{6,14}$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+
     // ── Null ─────────────────────────────────────────────────────────────────
 
     /// <summary>Throws <see cref="ArgumentNullException"/> if <paramref name="value"/> is null.</summary>
@@ -176,6 +179,20 @@ public static class Check
         return result;
     }
 
+    /// <summary>
+    /// Throws if the read-only collection is null or contains no elements.
+    /// Prefer this overload over <see cref="NotEmpty{T}(IEnumerable{T}?, string)"/> when you already
+    /// have a materialized collection — it avoids double-enumeration.
+    /// </summary>
+    public static IReadOnlyCollection<T> NotEmpty<T>(IReadOnlyCollection<T>? value, string paramName)
+    {
+        var result = NotNull(value, paramName);
+        if (result.Count == 0)
+            throw new ArgumentException("Collection must not be empty.", paramName);
+
+        return result;
+    }
+
     /// <summary>Throws if the collection exceeds <paramref name="max"/> items.</summary>
     public static ICollection<T> MaxCount<T>(ICollection<T> value, int max, string paramName)
     {
@@ -328,5 +345,98 @@ public static class Check
         }
 
         return trimmed;
+    }
+
+    /// <summary>
+    /// Throws if <paramref name="value"/> is null, empty, or not a valid E.164 phone number
+    /// (e.g. "+15551234567"). Returns the trimmed value on success.
+    /// </summary>
+    public static string Phone(string? value, string paramName)
+    {
+        var trimmed = NotEmpty(value, paramName);
+        if (!PhonePattern.IsMatch(trimmed))
+            throw new ArgumentException("Value must be a valid E.164 phone number (e.g. \"+15551234567\").", paramName);
+
+        return trimmed;
+    }
+
+    // ── DateOnly ─────────────────────────────────────────────────────────────
+
+    /// <summary>Throws if <paramref name="value"/> equals <see cref="DateOnly.MinValue"/> (default).</summary>
+    public static DateOnly NotDefault(DateOnly value, string paramName)
+    {
+        if (value == default)
+            throw new ArgumentException("DateOnly must not be the default value.", paramName);
+
+        return value;
+    }
+
+    /// <summary>Throws if <paramref name="value"/> is earlier than today (UTC).</summary>
+    public static DateOnly NotInPast(DateOnly value, string paramName)
+    {
+        NotDefault(value, paramName);
+        if (value < DateOnly.FromDateTime(DateTime.UtcNow))
+            throw new ArgumentOutOfRangeException(paramName, value, "DateOnly must not be in the past.");
+
+        return value;
+    }
+
+    /// <summary>Throws if <paramref name="value"/> is later than today (UTC).</summary>
+    public static DateOnly NotInFuture(DateOnly value, string paramName)
+    {
+        NotDefault(value, paramName);
+        if (value > DateOnly.FromDateTime(DateTime.UtcNow))
+            throw new ArgumentOutOfRangeException(paramName, value, "DateOnly must not be in the future.");
+
+        return value;
+    }
+
+    // ── TimeOnly ─────────────────────────────────────────────────────────────
+
+    /// <summary>Throws if <paramref name="value"/> equals <see cref="TimeOnly.MinValue"/> (default).</summary>
+    public static TimeOnly NotDefault(TimeOnly value, string paramName)
+    {
+        if (value == default)
+            throw new ArgumentException("TimeOnly must not be the default value.", paramName);
+
+        return value;
+    }
+
+    /// <summary>Throws if <paramref name="value"/> falls outside [<paramref name="min"/>, <paramref name="max"/>].</summary>
+    public static TimeOnly InRange(TimeOnly value, TimeOnly min, TimeOnly max, string paramName)
+    {
+        if (value < min || value > max)
+            throw new ArgumentOutOfRangeException(paramName, value, $"Value must be between {min} and {max}.");
+
+        return value;
+    }
+
+    // ── TimeSpan ─────────────────────────────────────────────────────────────
+
+    /// <summary>Throws if <paramref name="value"/> is zero or negative.</summary>
+    public static TimeSpan Positive(TimeSpan value, string paramName)
+    {
+        if (value <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(paramName, value, "Value must be greater than zero.");
+
+        return value;
+    }
+
+    /// <summary>Throws if <paramref name="value"/> is negative.</summary>
+    public static TimeSpan NotNegative(TimeSpan value, string paramName)
+    {
+        if (value < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(paramName, value, "Value must be zero or greater.");
+
+        return value;
+    }
+
+    /// <summary>Throws if <paramref name="value"/> falls outside [<paramref name="min"/>, <paramref name="max"/>].</summary>
+    public static TimeSpan InRange(TimeSpan value, TimeSpan min, TimeSpan max, string paramName)
+    {
+        if (value < min || value > max)
+            throw new ArgumentOutOfRangeException(paramName, value, $"Value must be between {min} and {max}.");
+
+        return value;
     }
 }

@@ -299,13 +299,13 @@ public class StringExtensionsTests
     [Fact]
     public void Mask_DefaultParams_MasksAllButFirstTwoChars()
     {
-        Assert.Equal("jo*************", "john@example.com".Mask());
+        Assert.Equal("jo**************", "john@example.com".Mask());
     }
 
     [Fact]
     public void Mask_WithVisibleEnd_PreservesTrailingChars()
     {
-        Assert.Equal("jo**********com", "john@example.com".Mask(visibleStart: 2, visibleEnd: 3));
+        Assert.Equal("jo***********com", "john@example.com".Mask(visibleStart: 2, visibleEnd: 3));
     }
 
     [Fact]
@@ -317,7 +317,7 @@ public class StringExtensionsTests
     [Fact]
     public void Mask_CustomMaskChar_UsesProvidedChar()
     {
-        Assert.Equal("jo###########om", "john@example.com".Mask(visibleStart: 2, visibleEnd: 2, maskChar: '#'));
+        Assert.Equal("jo############om", "john@example.com".Mask(visibleStart: 2, visibleEnd: 2, maskChar: '#'));
     }
 
     [Fact]

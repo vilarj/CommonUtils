@@ -18,8 +18,28 @@ The library throws handling exceptions for making the developer's life easier.</
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/vilarj/CommonUtils</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <PackageReleaseNotes>
+      v2.2.0
+      - Added Result&lt;T&gt; chaining extensions: Map, Bind, Match, OnSuccess, OnFailure, Recover
+      - Added async pipeline extensions: MapAsync, BindAsync, MatchAsync for Task&lt;Result&lt;T&gt;&gt;
+      - Added HTTP adapters: ToApiResponse, ToActionResult on Result&lt;T&gt;
+      - Added CommonApiExceptionHandler: shared IExceptionHandler (JSON + RFC 7807 ProblemDetails)
+      - Added CorrelationIdMiddleware + ICorrelationIdAccessor for X-Correlation-ID propagation
+      - Added IQueryable extensions: ApplyPagination, ApplySorting, ToPagedResultAsync (EF-agnostic)
+      - Added ClaimsPrincipalExtensions: GetUserId, GetEmail, GetRole, GetRoles, GetClaim, HasClaim
+      - Added ICurrentUserContext + HttpContextCurrentUserContext + AddCurrentUserContext()
+      - Added ValidationException.FromModelState(ModelStateDictionary)
+      - Added ValidateModelFilter: ActionFilterAttribute for automatic ModelState validation
+      - Added MultiSortParams: compound multi-column sort with Validate(allowedColumns)
+      - Added CursorPaginationParams&lt;TCursor&gt; + CursorPagedResult for keyset pagination
+      - Added DateOnly guards: NotDefault, NotInPast, NotInFuture
+      - Added TimeOnly guards: NotDefault, InRange
+      - Added TimeSpan guards: Positive, NotNegative, InRange
+      - Added Check.Phone: E.164 phone number format guard
+      - Added Check.NotEmpty(IReadOnlyCollection&lt;T&gt;) overload to eliminate double-enumeration risk
+      - Fixed: removed xUnit test dependencies from main library package (packaging pollution)
+
       v2.1.0
       - Added TooManyRequestsException (429), GoneException (410), ServiceUnavailableException (503)
       - Added SortParams and SortDirection for standardised list endpoint ordering
@@ -46,8 +66,13 @@ The library throws handling exceptions for making the developer's life easier.</
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit.assert" Version="2.9.3" />
-    <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>CommonUtils.Tests</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>

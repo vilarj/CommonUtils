@@ -3,8 +3,5 @@
 namespace CommonUtils.Exceptions;
 
 /// <summary>HTTP 403 — the caller is authenticated but lacks permission.</summary>
-public sealed class ForbiddenException : ApiException
-{
-    public ForbiddenException(string message = "Access denied.", string? errorCode = null)
-        : base(403, message, errorCode) { }
-}
+public sealed class ForbiddenException(string message = "Access denied.", string? errorCode = null)
+    : ApiException(403, message, errorCode);

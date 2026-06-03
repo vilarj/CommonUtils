@@ -3,8 +3,5 @@
 namespace CommonUtils.Exceptions;
 
 /// <summary>HTTP 400 — the request is malformed or contains invalid input.</summary>
-public sealed class BadRequestException : ApiException
-{
-    public BadRequestException(string message, string? errorCode = null)
-        : base(400, message, errorCode) { }
-}
+public sealed class BadRequestException(string message, string? errorCode = null)
+    : ApiException(400, message, errorCode);

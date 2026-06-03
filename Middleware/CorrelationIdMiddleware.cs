@@ -16,33 +16,25 @@ public interface ICorrelationIdAccessor
 /// it via <see cref="ICorrelationIdAccessor"/>. The ID is written back to the response
 /// under the same header so clients can correlate requests with logs.
 /// </summary>
-public sealed class CorrelationIdMiddleware : IMiddleware
+public sealed class CorrelationIdMiddleware(CorrelationIdOptions options, ICorrelationIdAccessor accessor)
+    : IMiddleware
 {
     /// <summary>Default header name used to carry the correlation ID.</summary>
     public const string DefaultHeaderName = "X-Correlation-ID";
-
-    private readonly CorrelationIdOptions _options;
-    private readonly ICorrelationIdAccessor _accessor;
-
-    public CorrelationIdMiddleware(CorrelationIdOptions options, ICorrelationIdAccessor accessor)
-    {
-        _options = options;
-        _accessor = accessor;
-    }
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(next);
-        var id = context.Request.Headers.TryGetValue(_options.HeaderName, out var existing) && !string.IsNullOrWhiteSpace(existing)
+        var id = context.Request.Headers.TryGetValue(options.HeaderName, out var existing) && !string.IsNullOrWhiteSpace(existing)
             ? existing.ToString()
             : Guid.NewGuid().ToString("N");
 
-        ((CorrelationIdAccessor)_accessor).SetId(id);
+        ((CorrelationIdAccessor)accessor).SetId(id);
 
         context.Response.OnStarting(() =>
         {
-            context.Response.Headers[_options.HeaderName] = id;
+            context.Response.Headers[options.HeaderName] = id;
             return Task.CompletedTask;
         });
 

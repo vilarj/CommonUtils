@@ -10,7 +10,6 @@ namespace CommonUtils.Linq;
 /// </summary>
 public static class QueryableExtensions
 {
-    // ── Pagination ────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Applies <see cref="PaginationParams.Skip"/> and <see cref="PaginationParams.Take"/>
@@ -23,8 +22,7 @@ public static class QueryableExtensions
         ArgumentNullException.ThrowIfNull(pagination);
         return query.Skip(pagination.Skip).Take(pagination.Take);
     }
-
-    // ── Sorting ───────────────────────────────────────────────────────────────
+    
 
     /// <summary>
     /// Applies an <c>OrderBy</c> / <c>OrderByDescending</c> based on <paramref name="sort"/>
@@ -58,8 +56,7 @@ public static class QueryableExtensions
             ? query.OrderByDescending(selector)
             : query.OrderBy(selector);
     }
-
-    // ── Paged result ─────────────────────────────────────────────────────────
+    
 
     /// <summary>
     /// Counts all matching items, then fetches one page and wraps everything in a

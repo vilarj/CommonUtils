@@ -30,15 +30,8 @@ public sealed class ExceptionHandlingOptions
 /// <c>UseExceptionHandler</c> boilerplate.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by the DI container.")]
-internal sealed class CommonApiExceptionHandler : IExceptionHandler
+internal sealed class CommonApiExceptionHandler(ExceptionHandlingOptions options) : IExceptionHandler
 {
-    private readonly ExceptionHandlingOptions _options;
-
-    public CommonApiExceptionHandler(ExceptionHandlingOptions options)
-    {
-        _options = options;
-    }
-
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
@@ -51,7 +44,7 @@ internal sealed class CommonApiExceptionHandler : IExceptionHandler
             if (apiEx is TooManyRequestsException tooMany && tooMany.RetryAfter.HasValue)
                 httpContext.Response.Headers["Retry-After"] = ((int)tooMany.RetryAfter.Value.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-            if (_options.UseProblemDetails)
+            if (options.UseProblemDetails)
                 await WriteProblemDetailsAsync(httpContext, apiEx, cancellationToken).ConfigureAwait(false);
             else
                 await WriteEnvelopeAsync(httpContext, apiEx, cancellationToken).ConfigureAwait(false);
@@ -59,16 +52,13 @@ internal sealed class CommonApiExceptionHandler : IExceptionHandler
             return true;
         }
 
-        if (_options.IncludeExceptionDetails)
-        {
-            httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await httpContext.Response.WriteAsJsonAsync(
-                new { success = false, errors = new[] { exception.Message } },
-                cancellationToken).ConfigureAwait(false);
-            return true;
-        }
+        if (!options.IncludeExceptionDetails) return false;
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await httpContext.Response.WriteAsJsonAsync(
+            new { success = false, errors = new[] { exception.Message } },
+            cancellationToken).ConfigureAwait(false);
+        return true;
 
-        return false;
     }
 
     private static Task WriteEnvelopeAsync(HttpContext context, ApiException ex, CancellationToken ct)

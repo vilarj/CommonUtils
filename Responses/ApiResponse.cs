@@ -36,8 +36,6 @@ public record ApiResponse
     /// <summary>Error messages. Empty on success.</summary>
     public IReadOnlyList<string> Errors { get; init; } = [];
 
-    // ── Non-generic (no-data) factories ──────────────────────────────────────
-
     /// <summary>Returns a successful no-data response with an optional message.</summary>
     public static ApiResponse Ok(string? message = null) =>
         new() { Success = true, Message = message };
@@ -49,8 +47,6 @@ public record ApiResponse
     /// <summary>Returns a failed no-data response with multiple error messages.</summary>
     public static ApiResponse Fail(IEnumerable<string> errors) =>
         new() { Success = false, Errors = errors.ToList().AsReadOnly() };
-
-    // ── Generic (with-data) factories ─────────────────────────────────────────
 
     /// <summary>Returns a successful response wrapping <paramref name="data"/>.</summary>
     public static ApiResponse<T> Ok<T>(T data, string? message = null) =>

@@ -68,10 +68,7 @@ public static class StringExtensions
     /// </summary>
     public static string ToKebabCase(this string value)
     {
-        if (string.IsNullOrEmpty(value))
-            return value;
-
-        return PascalOrCamelPattern.Replace(value, "$1-$2").ToLowerInvariant();
+        return string.IsNullOrEmpty(value) ? value : PascalOrCamelPattern.Replace(value, "$1-$2").ToLowerInvariant();
     }
 #pragma warning restore CA1308
 

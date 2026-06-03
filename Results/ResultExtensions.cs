@@ -9,7 +9,6 @@ namespace CommonUtils.Results;
 /// </summary>
 public static class ResultExtensions
 {
-    // ── Transformation ────────────────────────────────────────────────────────
 
     /// <summary>
     /// Projects the value of a successful result. If the result is a failure the errors
@@ -47,8 +46,7 @@ public static class ResultExtensions
         ArgumentNullException.ThrowIfNull(onFailure);
         return result.IsSuccess ? onSuccess(result.Value!) : onFailure(result.Errors);
     }
-
-    // ── Side-effects ──────────────────────────────────────────────────────────
+    
 
     /// <summary>
     /// Invokes <paramref name="action"/> with the value when the result is successful.
@@ -73,8 +71,7 @@ public static class ResultExtensions
         if (result.IsFailure) action(result.Errors);
         return result;
     }
-
-    // ── Recovery ─────────────────────────────────────────────────────────────
+    
 
     /// <summary>
     /// Attempts to recover from a failure by supplying a fallback value.
@@ -86,8 +83,7 @@ public static class ResultExtensions
         ArgumentNullException.ThrowIfNull(fallback);
         return result.IsFailure ? Result.Ok(fallback(result.Errors)) : result;
     }
-
-    // ── HTTP adapters ─────────────────────────────────────────────────────────
+    
 
     /// <summary>
     /// Converts the result to a <see cref="ApiResponse{T}"/> — success maps to

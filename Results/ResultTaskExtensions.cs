@@ -6,7 +6,6 @@ namespace CommonUtils.Results;
 /// </summary>
 public static class ResultTaskExtensions
 {
-    // ── Async Transformation ──────────────────────────────────────────────────
 
     /// <summary>
     /// Asynchronously projects the value of a successful result.
@@ -38,8 +37,7 @@ public static class ResultTaskExtensions
             ? Result.Fail<TOut>(result.Errors)
             : Result.Ok(map(result.Value!));
     }
-
-    // ── Async Bind ────────────────────────────────────────────────────────────
+    
 
     /// <summary>
     /// Chains an async result-returning function. If the current result is a failure
@@ -71,8 +69,7 @@ public static class ResultTaskExtensions
             ? Result.Fail<TOut>(result.Errors)
             : bind(result.Value!);
     }
-
-    // ── Async Match ───────────────────────────────────────────────────────────
+    
 
     /// <summary>
     /// Asynchronously collapses both success and failure paths into a single value.

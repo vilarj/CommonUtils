@@ -7,17 +7,11 @@ namespace CommonUtils.Auth;
 /// the <see cref="HttpContext"/> via <see cref="IHttpContextAccessor"/>.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by the DI container.")]
-internal sealed class HttpContextCurrentUserContext : ICurrentUserContext
+internal sealed class HttpContextCurrentUserContext(IHttpContextAccessor accessor) : ICurrentUserContext
 {
-    private readonly IHttpContextAccessor _accessor;
-
-    public HttpContextCurrentUserContext(IHttpContextAccessor accessor)
-    {
-        _accessor = accessor;
-    }
 
     private System.Security.Claims.ClaimsPrincipal? Principal =>
-        _accessor.HttpContext?.User;
+        accessor.HttpContext?.User;
 
     public string? UserId => Principal?.GetUserId();
     public string? Email => Principal?.GetEmail();

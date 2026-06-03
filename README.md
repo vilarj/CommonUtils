@@ -1,36 +1,47 @@
-# API Utilities
+# API-Utilities
 
-A lightweight .NET library of reusable building blocks for API development: input guards, string helpers, uniform response envelopes, pagination, sorting, HTTP-aware exceptions, a functional result type, shared middleware, auth helpers, and IQueryable extensions.
+[![NuGet](https://img.shields.io/nuget/v/API-Utilities?style=flat-square&color=4ade80&labelColor=0b0d11&label=nuget)](https://www.nuget.org/packages/API-Utilities)
+[![License: MIT](https://img.shields.io/badge/License-MIT-60a5fa?style=flat-square&labelColor=0b0d11)](LICENSE.txt)
+[![.NET](https://img.shields.io/badge/.NET-10.0-f472b6?style=flat-square&labelColor=0b0d11)](https://dotnet.microsoft.com)
 
-[![NuGet](https://img.shields.io/nuget/v/API-Utilities)](https://www.nuget.org/packages/API-Utilities)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
-
----
-
-## Installation
+> A lightweight .NET library of reusable building blocks for API development — input guards, string helpers, uniform response envelopes, pagination, sorting, HTTP-aware exceptions, a functional result type, shared middleware, auth helpers, and IQueryable extensions.
 
 ```bash
 dotnet add package API-Utilities
 ```
 
-**Target framework:** .NET 10.0
+---
+
+## Table of Contents
+
+- [Namespaces](#namespaces)
+- [Check — Input Guards](#check--input-guards)
+- [StringExtensions](#stringextensions)
+- [ApiResponse — Uniform Response Envelope](#apiresponse--uniform-response-envelope)
+- [Pagination](#pagination)
+- [Middleware](#middleware)
+- [IQueryable Extensions](#iqueryable-extensions)
+- [Auth Helpers](#auth-helpers)
+- [Exceptions](#exceptions)
+- [Result\<T\> — Functional Result Type](#resultt--functional-result-type)
+- [Validation Filter](#validation-filter)
 
 ---
 
 ## Namespaces
 
-| Namespace                | Contents                                                                                              |
-| ------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `CommonUtils.Checks`     | `Check` — static guard methods                                                                        |
-| `CommonUtils.Extensions` | `StringExtensions` — string helpers                                                                   |
-| `CommonUtils.Responses`  | `ApiResponse`, `ApiResponse<T>` — response envelope                                                  |
-| `CommonUtils.Pagination` | `PaginationParams`, `PagedResult<T>`, `SortParams`, `MultiSortParams`, `CursorPaginationParams<T>`   |
-| `CommonUtils.Exceptions` | `ApiException` and HTTP-specific subclasses                                                           |
-| `CommonUtils.Results`    | `Result<T>`, `Result`, `Unit` — functional result type + chaining extensions                         |
-| `CommonUtils.Middleware` | `CommonApiExceptionHandler`, `CorrelationIdMiddleware`, `ICorrelationIdAccessor`                      |
-| `CommonUtils.Auth`       | `ClaimsPrincipalExtensions`, `ICurrentUserContext`                                                    |
-| `CommonUtils.Linq`       | `QueryableExtensions` — IQueryable pagination, sorting, paged result                                 |
-| `CommonUtils.Filters`    | `ValidateModelFilter` — automatic ModelState validation filter                                        |
+| Namespace | Contents |
+|---|---|
+| `CommonUtils.Checks` | `Check` — static guard methods |
+| `CommonUtils.Extensions` | `StringExtensions` — string helpers |
+| `CommonUtils.Responses` | `ApiResponse`, `ApiResponse<T>` — response envelope |
+| `CommonUtils.Pagination` | `PaginationParams`, `PagedResult<T>`, `SortParams`, `MultiSortParams`, `CursorPaginationParams<T>` |
+| `CommonUtils.Exceptions` | `ApiException` and HTTP-specific subclasses |
+| `CommonUtils.Results` | `Result<T>`, `Result`, `Unit` — functional result type + chaining extensions |
+| `CommonUtils.Middleware` | `CommonApiExceptionHandler`, `CorrelationIdMiddleware`, `ICorrelationIdAccessor` |
+| `CommonUtils.Auth` | `ClaimsPrincipalExtensions`, `ICurrentUserContext` |
+| `CommonUtils.Linq` | `QueryableExtensions` — IQueryable pagination, sorting, paged result |
+| `CommonUtils.Filters` | `ValidateModelFilter` — automatic ModelState validation filter |
 
 ---
 
@@ -44,88 +55,88 @@ using CommonUtils.Checks;
 public void CreateOrder(string customerId, int quantity, decimal price)
 {
     customerId = Check.NotEmpty(customerId, nameof(customerId)); // trims and returns
-    quantity   = Check.Positive(quantity, nameof(quantity));
-    price      = Check.Positive(price, nameof(price));
+    quantity   = Check.Positive(quantity,   nameof(quantity));
+    price      = Check.Positive(price,      nameof(price));
 }
 ```
 
 ### String guards
 
-| Method                                | Throws              | Notes                                              |
-| ------------------------------------- | ------------------- | -------------------------------------------------- |
-| `NotEmpty(string?, paramName)`        | `ArgumentException` | Null, empty, or whitespace. Returns trimmed value. |
-| `MaxLength(string, max, paramName)`   | `ArgumentException` | Trims before measuring. Returns original value.    |
-| `MinLength(string, min, paramName)`   | `ArgumentException` | Trims before measuring. Returns original value.    |
-| `Length(string, min, max, paramName)` | `ArgumentException` | Combined min + max check.                          |
+| Method | Throws | Notes |
+|---|---|---|
+| `NotEmpty(string?, paramName)` | `ArgumentException` | Null, empty, or whitespace. Returns trimmed value. |
+| `MaxLength(string, max, paramName)` | `ArgumentException` | Trims before measuring. Returns original value. |
+| `MinLength(string, min, paramName)` | `ArgumentException` | Trims before measuring. Returns original value. |
+| `Length(string, min, max, paramName)` | `ArgumentException` | Combined min + max check. |
 
 ### Numeric guards — `int`, `long`, `decimal`, `double`
 
-| Method                                | Throws                        | Notes                         |
-| ------------------------------------- | ----------------------------- | ----------------------------- |
-| `Positive(value, paramName)`          | `ArgumentOutOfRangeException` | value > 0                     |
-| `NotNegative(value, paramName)`       | `ArgumentOutOfRangeException` | value ≥ 0                     |
+| Method | Throws | Notes |
+|---|---|---|
+| `Positive(value, paramName)` | `ArgumentOutOfRangeException` | value > 0 |
+| `NotNegative(value, paramName)` | `ArgumentOutOfRangeException` | value ≥ 0 |
 | `InRange(value, min, max, paramName)` | `ArgumentOutOfRangeException` | `int` and `decimal` overloads |
 
 ### Collection guards
 
-| Method                                                | Throws                  | Notes                                              |
-| ----------------------------------------------------- | ----------------------- | -------------------------------------------------- |
-| `NotNull<T>(value, paramName)`                        | `ArgumentNullException` | Any reference type                                 |
-| `NotEmpty<T>(IEnumerable<T>?, paramName)`             | `ArgumentException`     | Null or empty                                      |
-| `NotEmpty<T>(IReadOnlyCollection<T>?, paramName)`     | `ArgumentException`     | Preferred overload — avoids double-enumeration     |
-| `MaxCount<T>(ICollection<T>, max, paramName)`         | `ArgumentException`     | —                                                  |
-| `MinCount<T>(ICollection<T>, min, paramName)`         | `ArgumentException`     | —                                                  |
+| Method | Throws | Notes |
+|---|---|---|
+| `NotNull<T>(value, paramName)` | `ArgumentNullException` | Any reference type |
+| `NotEmpty<T>(IEnumerable<T>?, paramName)` | `ArgumentException` | Null or empty |
+| `NotEmpty<T>(IReadOnlyCollection<T>?, paramName)` | `ArgumentException` | Preferred overload — avoids double-enumeration |
+| `MaxCount<T>(ICollection<T>, max, paramName)` | `ArgumentException` | — |
+| `MinCount<T>(ICollection<T>, min, paramName)` | `ArgumentException` | — |
 
 ### Other guards
 
-| Method                                   | Throws                        | Notes                       |
-| ---------------------------------------- | ----------------------------- | --------------------------- |
-| `NotEmpty(Guid, paramName)`              | `ArgumentException`           | `Guid.Empty` check          |
-| `Defined<T>(T, paramName)`               | `ArgumentException`           | Enum value must be declared |
-| `NotDefault(DateTime, paramName)`        | `ArgumentException`           | Rejects `DateTime.MinValue` |
-| `NotDefault(DateTimeOffset, paramName)`  | `ArgumentException`           | —                           |
-| `NotInPast(DateTime, paramName)`         | `ArgumentOutOfRangeException` | Calls `NotDefault` first    |
-| `NotInFuture(DateTime, paramName)`       | `ArgumentOutOfRangeException` | Calls `NotDefault` first    |
-| `NotInPast(DateTimeOffset, paramName)`   | `ArgumentOutOfRangeException` | —                           |
-| `NotInFuture(DateTimeOffset, paramName)` | `ArgumentOutOfRangeException` | —                           |
-| `NotDefault(DateOnly, paramName)`        | `ArgumentException`           | Rejects `DateOnly.MinValue` |
-| `NotInPast(DateOnly, paramName)`         | `ArgumentOutOfRangeException` | Calls `NotDefault` first    |
-| `NotInFuture(DateOnly, paramName)`       | `ArgumentOutOfRangeException` | Calls `NotDefault` first    |
-| `NotDefault(TimeOnly, paramName)`        | `ArgumentException`           | Rejects `TimeOnly.MinValue` |
-| `InRange(TimeOnly, min, max, paramName)` | `ArgumentOutOfRangeException` | Inclusive bounds            |
-| `Positive(TimeSpan, paramName)`          | `ArgumentOutOfRangeException` | value > Zero                |
-| `NotNegative(TimeSpan, paramName)`       | `ArgumentOutOfRangeException` | value ≥ Zero                |
-| `InRange(TimeSpan, min, max, paramName)` | `ArgumentOutOfRangeException` | Inclusive bounds            |
+| Method | Throws | Notes |
+|---|---|---|
+| `NotEmpty(Guid, paramName)` | `ArgumentException` | `Guid.Empty` check |
+| `Defined<T>(T, paramName)` | `ArgumentException` | Enum value must be declared |
+| `NotDefault(DateTime, paramName)` | `ArgumentException` | Rejects `DateTime.MinValue` |
+| `NotDefault(DateTimeOffset, paramName)` | `ArgumentException` | — |
+| `NotInPast(DateTime, paramName)` | `ArgumentOutOfRangeException` | Calls `NotDefault` first |
+| `NotInFuture(DateTime, paramName)` | `ArgumentOutOfRangeException` | Calls `NotDefault` first |
+| `NotInPast(DateTimeOffset, paramName)` | `ArgumentOutOfRangeException` | — |
+| `NotInFuture(DateTimeOffset, paramName)` | `ArgumentOutOfRangeException` | — |
+| `NotDefault(DateOnly, paramName)` | `ArgumentException` | Rejects `DateOnly.MinValue` |
+| `NotInPast(DateOnly, paramName)` | `ArgumentOutOfRangeException` | Calls `NotDefault` first |
+| `NotInFuture(DateOnly, paramName)` | `ArgumentOutOfRangeException` | Calls `NotDefault` first |
+| `NotDefault(TimeOnly, paramName)` | `ArgumentException` | Rejects `TimeOnly.MinValue` |
+| `InRange(TimeOnly, min, max, paramName)` | `ArgumentOutOfRangeException` | Inclusive bounds |
+| `Positive(TimeSpan, paramName)` | `ArgumentOutOfRangeException` | value > Zero |
+| `NotNegative(TimeSpan, paramName)` | `ArgumentOutOfRangeException` | value ≥ Zero |
+| `InRange(TimeSpan, min, max, paramName)` | `ArgumentOutOfRangeException` | Inclusive bounds |
 
 ```csharp
-var id         = Check.NotEmpty(dto.Id, nameof(dto.Id));
-var tags       = Check.NotEmpty(dto.Tags, nameof(dto.Tags));
-var role       = Check.Defined(dto.Role, nameof(dto.Role));
-var expires    = Check.NotInPast(dto.ExpiresAt, nameof(dto.ExpiresAt));
-var apptDate   = Check.NotInPast(dto.AppointmentDate, nameof(dto.AppointmentDate)); // DateOnly
-var openTime   = Check.InRange(dto.OpenTime, new TimeOnly(8,0), new TimeOnly(20,0), nameof(dto.OpenTime));
-var timeout    = Check.Positive(dto.Timeout, nameof(dto.Timeout)); // TimeSpan
+var id       = Check.NotEmpty(dto.Id,              nameof(dto.Id));
+var tags     = Check.NotEmpty(dto.Tags,            nameof(dto.Tags));
+var role     = Check.Defined(dto.Role,             nameof(dto.Role));
+var expires  = Check.NotInPast(dto.ExpiresAt,      nameof(dto.ExpiresAt));
+var apptDate = Check.NotInPast(dto.AppointmentDate, nameof(dto.AppointmentDate)); // DateOnly
+var openTime = Check.InRange(dto.OpenTime, new TimeOnly(8,0), new TimeOnly(20,0), nameof(dto.OpenTime));
+var timeout  = Check.Positive(dto.Timeout,         nameof(dto.Timeout)); // TimeSpan
 ```
 
 ### Format guards
 
-| Method                                 | Throws              | Notes                                          |
-| -------------------------------------- | ------------------- | ---------------------------------------------- |
-| `Email(string?, paramName)`            | `ArgumentException` | RFC-style format check. Returns trimmed value. |
-| `Url(string?, paramName)`              | `ArgumentException` | Absolute HTTP/HTTPS URL only.                  |
-| `Matches(string?, pattern, paramName)` | `ArgumentException` | Custom regex with 1-second timeout.            |
-| `Phone(string?, paramName)`            | `ArgumentException` | E.164 format (`+15551234567`).                 |
+| Method | Throws | Notes |
+|---|---|---|
+| `Email(string?, paramName)` | `ArgumentException` | RFC-style format check. Returns trimmed value. |
+| `Url(string?, paramName)` | `ArgumentException` | Absolute HTTP/HTTPS URL only. |
+| `Matches(string?, pattern, paramName)` | `ArgumentException` | Custom regex with 1-second timeout. |
+| `Phone(string?, paramName)` | `ArgumentException` | E.164 format (`+15551234567`). |
 
 ```csharp
-email    = Check.Email(dto.Email, nameof(dto.Email));
-website  = Check.Url(dto.Website, nameof(dto.Website));
+email    = Check.Email(dto.Email,       nameof(dto.Email));
+website  = Check.Url(dto.Website,       nameof(dto.Website));
 postCode = Check.Matches(dto.PostCode, @"^\d{5}$", nameof(dto.PostCode));
-phone    = Check.Phone(dto.Phone, nameof(dto.Phone));
+phone    = Check.Phone(dto.Phone,       nameof(dto.Phone));
 ```
 
 ---
 
-## StringExtensions — String Helpers
+## StringExtensions
 
 ```csharp
 using CommonUtils.Extensions;
@@ -193,12 +204,12 @@ Converts `snake_case` or `kebab-case` to `PascalCase`.
 Masks the middle of a string, preserving a configurable number of characters at each end. Safe for logging emails, tokens, and phone numbers.
 
 ```csharp
-"user@example.com".Mask()              // "us**************" (2 visible start, default)
-"user@example.com".Mask(2, 3)         // "us***********com"
-"secret-token".Mask(0, 0, '#')        // "############"
+"user@example.com".Mask()        // "us**************"  (2 visible start, default)
+"user@example.com".Mask(2, 3)    // "us***********com"
+"secret-token".Mask(0, 0, '#')   // "############"
 ```
 
-**Parameters:** `visibleStart` (default 2), `visibleEnd` (default 0), `maskChar` (default `*`).  
+**Parameters:** `visibleStart` (default 2), `visibleEnd` (default 0), `maskChar` (default `*`).
 When `visibleStart + visibleEnd ≥ length`, the entire string is masked.
 
 ---
@@ -235,15 +246,14 @@ return UnprocessableEntity(ApiResponse.Fail<User>(errors));
 
 ```csharp
 return Ok(ApiResponse.Ok("Order cancelled."));
-
 return BadRequest(ApiResponse.Fail("Insufficient stock."));
 ```
 
 **Shape:**
 
 ```json
-{ "success": true,  "message": "Order cancelled.", "errors": [] }
-{ "success": false, "message": null,               "errors": ["Insufficient stock."] }
+{ "success": true,  "message": "Order cancelled.",  "errors": [] }
+{ "success": false, "message": null,                "errors": ["Insufficient stock."] }
 ```
 
 ---
@@ -283,21 +293,21 @@ return Ok(ApiResponse.Ok(result));
 
 **Properties on `PagedResult<T>`:**
 
-| Property          | Type               | Description                         |
-| ----------------- | ------------------ | ----------------------------------- |
-| `Items`           | `IReadOnlyList<T>` | Current page items                  |
-| `Page`            | `int`              | Current page (1-based)              |
-| `PageSize`        | `int`              | Items per page                      |
-| `TotalCount`      | `int`              | Total items across all pages        |
-| `TotalPages`      | `int`              | Computed: `⌈TotalCount / PageSize⌉` |
-| `HasNextPage`     | `bool`             | `Page < TotalPages`                 |
-| `HasPreviousPage` | `bool`             | `Page > 1`                          |
+| Property | Type | Description |
+|---|---|---|
+| `Items` | `IReadOnlyList<T>` | Current page items |
+| `Page` | `int` | Current page (1-based) |
+| `PageSize` | `int` | Items per page |
+| `TotalCount` | `int` | Total items across all pages |
+| `TotalPages` | `int` | Computed: `⌈TotalCount / PageSize⌉` |
+| `HasNextPage` | `bool` | `Page < TotalPages` |
+| `HasPreviousPage` | `bool` | `Page > 1` |
 
 Use `PagedResult.Empty<T>(pagination)` when the data source returns nothing.
 
 ### `SortParams`
 
-Companion to `PaginationParams` for list endpoints that support ordering. Bind directly from the query string.
+Companion to `PaginationParams` for list endpoints that support ordering.
 
 ```csharp
 // GET /orders?sortBy=createdAt&direction=Desc
@@ -322,7 +332,7 @@ public IActionResult GetOrders(
 
 ### `MultiSortParams`
 
-For endpoints that need compound ordering across multiple columns. Bind from repeated query string values.
+For endpoints that need compound ordering across multiple columns.
 
 ```csharp
 // GET /orders?sort=createdAt:desc&sort=name:asc
@@ -331,7 +341,7 @@ public IActionResult GetOrders(
     [FromQuery] PaginationParams pagination,
     [FromQuery] MultiSortParams sort)
 {
-    sort.Validate(["name", "createdAt", "price"]); // throws BadRequestException for unknown columns
+    sort.Validate(["name", "createdAt", "price"]);
 
     foreach (var criterion in sort.Criteria)
     {
@@ -383,12 +393,14 @@ Shared `IExceptionHandler` that maps `ApiException` subclasses to uniform JSON r
 
 ```csharp
 // Program.cs
-builder.Services.AddCommonApiExceptionHandling();  // or .AddCommonApiExceptionHandling(useProblemDetails: true)
+builder.Services.AddCommonApiExceptionHandling();
+// or: .AddCommonApiExceptionHandling(useProblemDetails: true)
 
 app.UseCommonApiExceptionHandling();
 ```
 
 Supports two modes:
+
 - **Default** — returns `ApiResponse`-shaped JSON (`{ success, errors, errorCode }`)
 - **ProblemDetails** — returns RFC 7807 `application/problem+json`
 
@@ -400,8 +412,11 @@ Reads or generates a `X-Correlation-ID` for every request, making it available t
 
 ```csharp
 // Program.cs
-builder.Services.AddCorrelationId();       // registers middleware + ICorrelationIdAccessor
+builder.Services.AddCorrelationId();
 app.UseCorrelationId();
+
+// Custom header name
+builder.Services.AddCorrelationId(options => options.HeaderName = "X-Request-ID");
 
 // Inject in a service or controller
 public class OrderService(ICorrelationIdAccessor correlationId)
@@ -411,12 +426,6 @@ public class OrderService(ICorrelationIdAccessor correlationId)
         _logger.LogInformation("CorrelationId: {Id}", correlationId.CorrelationId);
     }
 }
-```
-
-Custom header name:
-
-```csharp
-builder.Services.AddCorrelationId(options => options.HeaderName = "X-Request-ID");
 ```
 
 ---
@@ -430,7 +439,6 @@ using CommonUtils.Linq;
 Eliminates manual `Skip`/`Take`/`OrderBy` in every service method. The `ToPagedResultAsync` overload accepts a materializer delegate so the library stays free of an EF Core dependency.
 
 ```csharp
-// Apply pagination and sorting, then materialise
 var result = await _db.Orders
     .Where(o => o.CustomerId == customerId)
     .ApplySorting(sort, new Dictionary<string, Expression<Func<Order, object?>>>
@@ -445,11 +453,11 @@ var result = await _db.Orders
         cancellationToken);
 ```
 
-| Method                                                         | Description                                   |
-| -------------------------------------------------------------- | --------------------------------------------- |
-| `ApplyPagination(PaginationParams)`                            | Applies `Skip` + `Take`                       |
-| `ApplySorting(SortParams, columnMap)`                          | Applies type-safe `OrderBy`/`OrderByDesc`     |
-| `ToPagedResultAsync(pagination, materialize, countAsync, ct)`  | Counts + pages + wraps in `PagedResult<T>`    |
+| Method | Description |
+|---|---|
+| `ApplyPagination(PaginationParams)` | Applies `Skip` + `Take` |
+| `ApplySorting(SortParams, columnMap)` | Applies type-safe `OrderBy`/`OrderByDesc` |
+| `ToPagedResultAsync(pagination, materialize, countAsync, ct)` | Counts + pages + wraps in `PagedResult<T>` |
 
 ---
 
@@ -461,17 +469,17 @@ var result = await _db.Orders
 using CommonUtils.Auth;
 
 // In a controller or service
-string? userId = User.GetUserId();   // ClaimTypes.NameIdentifier
-string? email  = User.GetEmail();
-string? role   = User.GetRole();     // first role claim
+string? userId  = User.GetUserId();   // ClaimTypes.NameIdentifier
+string? email   = User.GetEmail();
+string? role    = User.GetRole();     // first role claim
 IEnumerable<string> roles = User.GetRoles();
-string? custom = User.GetClaim("tenant-id");
-bool isAdmin   = User.HasClaim(ClaimTypes.Role, "Admin");
+string? custom  = User.GetClaim("tenant-id");
+bool isAdmin    = User.HasClaim(ClaimTypes.Role, "Admin");
 ```
 
 ### `ICurrentUserContext`
 
-Scoped service that wraps the current user's claims for injection into services (no need to pass `ClaimsPrincipal` down the stack).
+Scoped service that wraps the current user's claims for injection into services — no need to pass `ClaimsPrincipal` down the call stack.
 
 ```csharp
 // Program.cs
@@ -482,9 +490,9 @@ public class OrderService(ICurrentUserContext currentUser)
 {
     public void PlaceOrder()
     {
-        var userId = currentUser.UserId;      // string?
-        var email  = currentUser.Email;       // string?
-        var role   = currentUser.Role;        // string?
+        var userId = currentUser.UserId;          // string?
+        var email  = currentUser.Email;           // string?
+        var role   = currentUser.Role;            // string?
         var auth   = currentUser.IsAuthenticated; // bool
     }
 }
@@ -492,27 +500,9 @@ public class OrderService(ICurrentUserContext currentUser)
 
 ---
 
-## Validation Filter
-
-`ValidateModelFilter` is an `ActionFilterAttribute` that automatically throws `ValidationException` when `ModelState` is invalid, removing the need for `if (!ModelState.IsValid)` in every action.
-
-```csharp
-// Register globally in Program.cs
-builder.Services.AddControllers(options =>
-    options.Filters.Add<ValidateModelFilter>());
-
-// Or per-controller / per-action
-[ValidateModelFilter]
-public IActionResult CreateOrder([FromBody] CreateOrderDto dto) { ... }
-```
-
-`ValidationException.FromModelState(ModelState)` is also available directly if you need manual control.
-
----
-
 ## Exceptions
 
-All exceptions extend `ApiException`, which carries an HTTP `StatusCode` and an optional machine-readable `ErrorCode`. Use a single exception-handling middleware to map them to responses — no per-endpoint try/catch needed.
+All exceptions extend `ApiException`, which carries an HTTP `StatusCode` and an optional machine-readable `ErrorCode`. Wire once in middleware — no per-endpoint try/catch needed.
 
 ```csharp
 using CommonUtils.Exceptions;
@@ -520,17 +510,17 @@ using CommonUtils.Exceptions;
 
 ### Available exceptions
 
-| Class                         | Status | When to use                                       |
-| ----------------------------- | ------ | ------------------------------------------------- |
-| `BadRequestException`         | 400    | Malformed input, failed preconditions             |
-| `UnauthorizedException`       | 401    | Missing or invalid credentials                    |
-| `ForbiddenException`          | 403    | Authenticated but not permitted                   |
-| `NotFoundException`           | 404    | Resource does not exist                           |
-| `ConflictException`           | 409    | Duplicate or state conflict                       |
-| `ValidationException`         | 422    | Semantic validation errors (field-level)          |
-| `TooManyRequestsException`    | 429    | Rate limit exceeded                               |
-| `GoneException`               | 410    | Resource permanently removed                      |
-| `ServiceUnavailableException` | 503    | Dependency down, maintenance, or transient outage |
+| Class | Status | When to use |
+|---|---|---|
+| `BadRequestException` | 400 | Malformed input, failed preconditions |
+| `UnauthorizedException` | 401 | Missing or invalid credentials |
+| `ForbiddenException` | 403 | Authenticated but not permitted |
+| `NotFoundException` | 404 | Resource does not exist |
+| `ConflictException` | 409 | Duplicate or state conflict |
+| `GoneException` | 410 | Resource permanently removed |
+| `ValidationException` | 422 | Semantic validation errors (field-level) |
+| `TooManyRequestsException` | 429 | Rate limit exceeded |
+| `ServiceUnavailableException` | 503 | Dependency down, maintenance, or transient outage |
 
 ### Usage
 
@@ -550,17 +540,9 @@ throw new ValidationException(new Dictionary<string, string[]>
     ["Email"]    = ["Required", "Must be a valid email"],
     ["Password"] = ["Must be at least 8 characters"],
 });
-```
 
-### New exceptions usage
-
-```csharp
 // Rate limiting — include a retry hint for the client
 throw new TooManyRequestsException(retryAfter: TimeSpan.FromSeconds(30));
-
-// Map RetryAfter in middleware
-if (ex is TooManyRequestsException tooMany && tooMany.RetryAfter.HasValue)
-    context.Response.Headers["Retry-After"] = ((int)tooMany.RetryAfter.Value.TotalSeconds).ToString();
 
 // Permanently removed resource
 throw new GoneException("This API version has been retired.");
@@ -569,9 +551,9 @@ throw new GoneException("This API version has been retired.");
 throw new ServiceUnavailableException("Payment provider is currently unavailable.", "PAYMENT_DOWN");
 ```
 
-### Middleware integration (ASP.NET Core)
+### Middleware integration
 
-Use `CommonApiExceptionHandler` from `CommonUtils.Middleware` for zero-boilerplate setup (see [Middleware](#middleware) section above), or wire it manually:
+Use `CommonApiExceptionHandler` from `CommonUtils.Middleware` for zero-boilerplate setup (see [Middleware](#middleware)), or wire it manually:
 
 ```csharp
 app.UseExceptionHandler(builder => builder.Run(async context =>
@@ -583,13 +565,14 @@ app.UseExceptionHandler(builder => builder.Run(async context =>
         context.Response.StatusCode = apiEx.StatusCode;
 
         if (ex is TooManyRequestsException tooMany && tooMany.RetryAfter.HasValue)
-            context.Response.Headers["Retry-After"] = ((int)tooMany.RetryAfter.Value.TotalSeconds).ToString();
+            context.Response.Headers["Retry-After"] =
+                ((int)tooMany.RetryAfter.Value.TotalSeconds).ToString();
 
         await context.Response.WriteAsJsonAsync(new
         {
-            success = false,
+            success   = false,
             errorCode = apiEx.ErrorCode,
-            errors = ex is ValidationException vex && vex.Errors.Count > 0
+            errors    = ex is ValidationException vex && vex.Errors.Count > 0
                 ? vex.Errors
                 : new[] { ex.Message }
         });
@@ -597,7 +580,11 @@ app.UseExceptionHandler(builder => builder.Run(async context =>
     }
 
     context.Response.StatusCode = 500;
-    await context.Response.WriteAsJsonAsync(new { success = false, errors = new[] { "An unexpected error occurred." } });
+    await context.Response.WriteAsJsonAsync(new
+    {
+        success = false,
+        errors  = new[] { "An unexpected error occurred." }
+    });
 }));
 ```
 
@@ -646,8 +633,6 @@ return Ok(ApiResponse.Ok(result.Value!));
 Build pipelines without manual `if (result.IsFailure)` checks:
 
 ```csharp
-using CommonUtils.Results;
-
 var response = await _repo.FindOrderAsync(id)      // Task<Result<Order>>
     .MapAsync(order => new OrderDto(order))         // project value
     .BindAsync(dto => _validator.ValidateAsync(dto)) // chain another result
@@ -656,28 +641,46 @@ var response = await _repo.FindOrderAsync(id)      // Task<Result<Order>>
         onFailure: errs => BadRequest(ApiResponse.Fail<OrderDto>(errs)));
 ```
 
-| Method                               | Description                                                  |
-| ------------------------------------ | ------------------------------------------------------------ |
-| `Map(Func<T, TOut>)`                 | Project value; forwards errors unchanged                     |
-| `Bind(Func<T, Result<TOut>>)`        | Chain a result-returning function                            |
-| `Match(onSuccess, onFailure)`        | Collapse both paths into a single value                      |
-| `OnSuccess(Action<T>)`               | Side-effect on success; returns original result              |
-| `OnFailure(Action<errors>)`          | Side-effect on failure; returns original result              |
-| `Recover(Func<errors, T>)`           | Supply a fallback value on failure                           |
-| `ToApiResponse(message?)`            | Convert to `ApiResponse<T>`                                  |
-| `ToActionResult(message?)`           | Convert to `OkObjectResult` or `BadRequestObjectResult`      |
-| `MapAsync` / `BindAsync` / `MatchAsync` | Async equivalents for `Task<Result<T>>` pipelines         |
+| Method | Description |
+|---|---|
+| `Map(Func<T, TOut>)` | Project value; forwards errors unchanged |
+| `Bind(Func<T, Result<TOut>>)` | Chain a result-returning function |
+| `Match(onSuccess, onFailure)` | Collapse both paths into a single value |
+| `OnSuccess(Action<T>)` | Side-effect on success; returns original result |
+| `OnFailure(Action<errors>)` | Side-effect on failure; returns original result |
+| `Recover(Func<errors, T>)` | Supply a fallback value on failure |
+| `ToApiResponse(message?)` | Convert to `ApiResponse<T>` |
+| `ToActionResult(message?)` | Convert to `OkObjectResult` or `BadRequestObjectResult` |
+| `MapAsync` / `BindAsync` / `MatchAsync` | Async equivalents for `Task<Result<T>>` pipelines |
 
 ### Properties on `Result<T>`
 
-| Property    | Type                    | Description                             |
-| ----------- | ----------------------- | --------------------------------------- |
-| `IsSuccess` | `bool`                  | `true` when the operation succeeded     |
-| `IsFailure` | `bool`                  | `!IsSuccess`                            |
-| `Value`     | `T?`                    | The result value; meaningful on success |
-| `Errors`    | `IReadOnlyList<string>` | Error messages; empty on success        |
+| Property | Type | Description |
+|---|---|---|
+| `IsSuccess` | `bool` | `true` when the operation succeeded |
+| `IsFailure` | `bool` | `!IsSuccess` |
+| `Value` | `T?` | The result value; meaningful on success |
+| `Errors` | `IReadOnlyList<string>` | Error messages; empty on success |
 
 Use `Result<Unit>` for operations with no return value. `Unit.Value` is the singleton instance.
+
+---
+
+## Validation Filter
+
+`ValidateModelFilter` is an `ActionFilterAttribute` that automatically throws `ValidationException` when `ModelState` is invalid, removing the need for `if (!ModelState.IsValid)` in every action.
+
+```csharp
+// Register globally in Program.cs
+builder.Services.AddControllers(options =>
+    options.Filters.Add<ValidateModelFilter>());
+
+// Or per-controller / per-action
+[ValidateModelFilter]
+public IActionResult CreateOrder([FromBody] CreateOrderDto dto) { ... }
+```
+
+`ValidationException.FromModelState(ModelState)` is also available directly if you need manual control.
 
 ---
 
